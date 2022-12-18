@@ -1,6 +1,6 @@
-cmake_minimum_required (VERSION 3.25.1)
+cmake_minimum_required (VERSION 3.16)
 project (brv VERSION 0.0.1 DESCRIPTION "An attempt at an RV32I interpreter/VM")
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 
@@ -26,7 +26,6 @@ set(CMAKE_CXX_FLAGS_RELEASE "-Os")
 add_executable(
   ${CMAKE_PROJECT_NAME}
   src/main.cpp
-  src/code.c
     #  ${SOURCES}
 )
 

@@ -1,9 +1,32 @@
 #include <cstdint>
 #include <array>
+#include <vector>
+#include <iostream>
+
 #include <fmt/core.h>
+
+enum instr_types {
+    R_TYPE,
+    I_TYPE,
+    S_TYPE,
+    B_TYPE,
+    U_TYPE,
+    J_TYPE,
+    RAW
+};
+
+union component
+{
+    int32_t word_s;
+    uint32_t word;
+    uint16_t half[2];
+    uint8_t byte[4];
+};
 
 union instr
 {
+    //uint8_t inst_byte[4];
+    //uint16_t inst_half[2];
     uint32_t instruction;
     struct __attribute__((__packed__)) op_only
     {
@@ -64,33 +87,93 @@ union instr
     } j_type;
 };
 
-constexpr size_t tech = sizeof(instr);
-
-void unimplemented_instr(instr unimp)
+void spit_registers(uint32_t* regs, uint32_t pc)
 {
-    fmt::print("! UNIMPLEMENTED INSTRUCTION !\n");
-    fmt::print("HEX: {:08x}\n", unimp.instruction);
-    fmt::print("> Opcode: {:07b}\n", (uint8_t)unimp.op_only.opcode);
+    for (uint32_t c = 0; c < 32; c++)
+        fmt::print("> x{0:02}: {1:032b} {1:08x} {1} {2}\n", c, regs[c], (int32_t)regs[c]);
+    fmt::print("> PCR: {}\n", pc);
 }
+
+void unimplemented_instr(instr unimp, uint32_t* regs, uint32_t pc)
+{
+    fmt::print("! UNIMPLEMENTED INSTRUCTION !\nHEX: {:08x}\n> Opcode: {:07b}\n", unimp.instruction, (uint8_t)unimp.op_only.opcode);
+    spit_registers(regs, pc);
+    std::cin.get();
+}
+
+void print_pretty_instr(instr_types type, instr i)
+{
+    switch (type)
+    {
+        case RAW:
+            fmt::print("{:08b} {:08b} {:08b} {:08b}\n", i.instruction >> 24 & 0xFF, i.instruction >> 16 & 0xFF, i.instruction >> 8 & 0xFF, i.instruction & 0xFF);
+            break;
+        case R_TYPE:
+            fmt::print("{:07b} {:05b} {:05b} {:03b} {:05b} {:07b}\n", (uint8_t)i.r_type.funct7, (uint8_t)i.r_type.rs2, (uint8_t)i.r_type.rs1, (uint8_t)i.r_type.funct3, (uint8_t)i.r_type.rd, (uint8_t)i.r_type.opcode);
+            break;
+        case I_TYPE:
+            fmt::print("{:012b} {:05b} {:03b} {:05b} {:07b}\n", (uint16_t)i.i_type.imm, (uint8_t)i.i_type.rs1, (uint8_t)i.i_type.funct3, (uint8_t)i.i_type.rd, (uint8_t)i.i_type.opcode);
+            break;
+        case S_TYPE:
+            fmt::print("{:07b} {:05b} {:05b} {:03b} {:05b} {:07b}\n", (uint8_t)i.s_type.imm11_5, (uint8_t)i.s_type.rs2, (uint8_t)i.s_type.rs1, (uint8_t)i.s_type.funct3, (uint8_t)i.s_type.imm4_0, (uint8_t)i.s_type.opcode);
+            break;
+        case B_TYPE:
+            fmt::print("{:01b} {:06b} {:05b} {:05b} {:03b} {:04b} {:01b} {:07b}\n", (uint8_t)i.b_type.imm12, (uint8_t)i.b_type.imm10_5, (uint8_t)i.b_type.rs2, (uint8_t)i.b_type.rs1, (uint8_t)i.b_type.funct3, (uint8_t)i.b_type.imm4_1, (uint8_t)i.b_type.imm11, (uint8_t)i.b_type.opcode);
+            break;
+        case U_TYPE:
+            fmt::print("{:020b} {:05b} {:07b}\n", (uint8_t)i.u_type.imm31_12, (uint8_t)i.u_type.rd, (uint8_t)i.u_type.opcode);
+            break;
+        case J_TYPE:
+            fmt::print("{:01b} {:010b} {:01b} {:08b} {:05b} {:07b}\n", (uint8_t)i.j_type.imm20, (uint8_t)i.j_type.imm10_1, (uint8_t)i.j_type.imm11, (uint8_t)i.j_type.imm19_12, (uint8_t)i.j_type.rd, (uint8_t)i.j_type.opcode);
+            break;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+#define EBREAK 0x00100073
+#define ECONT 0x00200073
+
+
+
+
 
 int main()
 {
-    instr test;
-
-    std::array<uint32_t, 3> rom_code = {
-        0x06408093, // ADDI x1, x1, 100
-        0x0c810113, // ADDI x2, x2, 200
-        0x001101b3 // ADD  x3, x2, x1
+    std::vector<uint32_t> translated_prog = {
+        0xddccc0b7,
+        0xbaa08093,
+        0x00102823,
+        0x00100073,
+        0x00000000
     };
 
+    // UINT16_MAX 32-bit words
+    std::array<uint8_t, UINT16_MAX * 4> memory = {};
+
+    for (std::size_t i = 0; i < translated_prog.size(); i++)
+    {
+        memory[i * 4 + 0] = translated_prog[i] >> 0  & 0xFF;
+        memory[i * 4 + 1] = translated_prog[i] >> 8  & 0xFF;
+        memory[i * 4 + 2] = translated_prog[i] >> 16 & 0xFF;
+        memory[i * 4 + 3] = translated_prog[i] >> 24 & 0xFF;
+    }
+
+    // BEGIN INTERPRETATION
+    instr test;
     uint32_t gp_regs[32];
     uint32_t pc_reg = 0;
 
-    for (uint32_t i = 0; i < rom_code.size(); i++)
+    for (;;)
     {
-        // test.instruction = (rom_code[pc_reg + 3] << 24) | (rom_code[pc_reg + 2]
-        // << 16) | (rom_code[pc_reg + 1] << 8) | (rom_code[pc_reg]);
-        test.instruction = rom_code[i]; // pc_reg];
+        test.instruction = (uint32_t)memory[pc_reg + 3] << 24 | (uint32_t)memory[pc_reg + 2] << 16 | (uint32_t)memory[pc_reg + 1] << 8 | (uint32_t)memory[pc_reg + 0] << 0;
         switch (test.op_only.opcode)
         {
             case 0b0110011: // Integer ALU R-Type
@@ -100,21 +183,24 @@ int main()
                         switch (test.r_type.funct7)
                         {
                             case 0x00:
-                                fmt::print("ADD instr\n");
-                                if (test.r_type.rd != 0) // Prevent write to x0 (AKA, hardwire 0)
+                                fmt::print("ADD Instr\n");
+                                if (test.r_type.rd != 0)
                                 {
                                     gp_regs[test.r_type.rd] = gp_regs[test.r_type.rs1] + gp_regs[test.r_type.rs2];
                                 }
+                                pc_reg += 4;
                                 break;
                             case 0x20:
-                                fmt::print("SUB instr\n");
-                                if (test.r_type.rd != 0) // Prevent write to x0 (AKA, hardwire 0)
+                                fmt::print("SUB Instr\n");
+                                if (test.r_type.rd != 0)
                                 {
                                     gp_regs[test.r_type.rd] = gp_regs[test.r_type.rs1] - gp_regs[test.r_type.rs2];
                                 }
+                                pc_reg += 4;
                                 break;
                             default:
-                                unimplemented_instr(test);
+                                unimplemented_instr(test, gp_regs, pc_reg);
+                                pc_reg += 4;
                                 break;
                         }
                         break;
@@ -122,14 +208,16 @@ int main()
                         switch (test.r_type.funct7)
                         {
                             case 0x00:
-                                fmt::print("XOR instr\n");
-                                if (test.r_type.rd != 0) // Prevent write to x0 (AKA, hardwire 0)
+                                fmt::print("XOR Instr (UNTESTED)\n");
+                                if (test.r_type.rd != 0)
                                 {
                                     gp_regs[test.r_type.rd] = gp_regs[test.r_type.rs1] ^ gp_regs[test.r_type.rs2];
                                 }
+                                pc_reg += 4;
                                 break;
                             default:
-                                unimplemented_instr(test);
+                                unimplemented_instr(test, gp_regs, pc_reg);
+                                pc_reg += 4;
                                 break;
                         }
                         break;
@@ -137,14 +225,16 @@ int main()
                         switch (test.r_type.funct7)
                         {
                             case 0x00:
-                                fmt::print("OR instr\n");
-                                if (test.r_type.rd != 0) // Prevent write to x0 (AKA, hardwire 0)
+                                fmt::print("OR Instr (UNTESTED)\n");
+                                if (test.r_type.rd != 0)
                                 {
                                     gp_regs[test.r_type.rd] = gp_regs[test.r_type.rs1] | gp_regs[test.r_type.rs2];
                                 }
+                                pc_reg += 4;
                                 break;
                             default:
-                                unimplemented_instr(test);
+                                unimplemented_instr(test, gp_regs, pc_reg);
+                                pc_reg += 4;
                                 break;
                         }
                         break;
@@ -152,14 +242,16 @@ int main()
                         switch (test.r_type.funct7)
                         {
                             case 0x00:
-                                fmt::print("AND instr\n");
-                                if (test.r_type.rd != 0) // Prevent write to x0 (AKA, hardwire 0)
+                                fmt::print("AND Instr (UNTESTED)\n");
+                                if (test.r_type.rd != 0)
                                 {
                                     gp_regs[test.r_type.rd] = gp_regs[test.r_type.rs1] & gp_regs[test.r_type.rs2];
                                 }
+                                pc_reg += 4;
                                 break;
                             default:
-                                unimplemented_instr(test);
+                                unimplemented_instr(test, gp_regs, pc_reg);
+                                pc_reg += 4;
                                 break;
                         }
                         break;
@@ -167,14 +259,16 @@ int main()
                         switch (test.r_type.funct7)
                         {
                             case 0x00:
-                                fmt::print("SLL instr\n");
-                                if (test.r_type.rd != 0) // Prevent write to x0 (AKA, hardwire 0)
+                                fmt::print("SLL Instr (UNTESTED)\n");
+                                if (test.r_type.rd != 0)
                                 {
                                     gp_regs[test.r_type.rd] = gp_regs[test.r_type.rs1] << gp_regs[test.r_type.rs2];
                                 }
+                                pc_reg += 4;
                                 break;
                             default:
-                                unimplemented_instr(test);
+                                unimplemented_instr(test, gp_regs, pc_reg);
+                                pc_reg += 4;
                                 break;
                         }
                         break;
@@ -182,38 +276,41 @@ int main()
                         switch (test.r_type.funct7)
                         {
                             case 0x00:
-                                fmt::print("SRL instr\n");
-                                if (test.r_type.rd != 0) // Prevent write to x0 (AKA, hardwire 0)
+                                fmt::print("SRL Instr (UNTESTED)\n");
+                                if (test.r_type.rd != 0)
                                 {
                                     gp_regs[test.r_type.rd] = gp_regs[test.r_type.rs1] >> gp_regs[test.r_type.rs2];
                                 }
+                                pc_reg += 4;
                                 break;
                             case 0x20:
-                                fmt::print("SRA instr\n");
-                                if (test.r_type.rd != 0) // Prevent write to x0 (AKA, hardwire 0)
+                                fmt::print("SRA Instr (UNTESTED)\n");
+                                if (test.r_type.rd != 0)
                                 {
                                     gp_regs[test.r_type.rd] = (int32_t)gp_regs[test.r_type.rs1] >> gp_regs[test.r_type.rs2];
                                 }
+                                pc_reg += 4;
                                 break;
                             default:
-                                unimplemented_instr(test);
+                                unimplemented_instr(test, gp_regs, pc_reg);
+                                pc_reg += 4;
                                 break;
                         }
                         break;
-                    case 0x2: // SLT (Set Less Than [signed?]) (RV32I only has one
-                        // instruction
-                        // for funct3)
+                    case 0x2: // SLT (Set Less Than [signed?]) (RV32I only has one instruction for funct3)
                         switch (test.r_type.funct7)
                         {
                             case 0x00:
-                                fmt::print("SLT instr\n");
-                                if (test.r_type.rd != 0) // Prevent write to x0 (AKA, hardwire 0)
+                                fmt::print("SLT Instr (UNTESTED)\n");
+                                if (test.r_type.rd != 0)
                                 {
                                     gp_regs[test.r_type.rd] = (signed)gp_regs[test.r_type.rs1] < (signed)gp_regs[test.r_type.rs2] ? 1 : 0;
                                 }
+                                pc_reg += 4;
                                 break;
                             default:
-                                unimplemented_instr(test);
+                                unimplemented_instr(test, gp_regs, pc_reg);
+                                pc_reg += 4;
                                 break;
                         }
                         break;
@@ -221,106 +318,229 @@ int main()
                         switch (test.r_type.funct7)
                         {
                             case 0x00:
-                                fmt::print("SLTU instr\n");
-                                if (test.r_type.rd != 0) // Prevent write to x0 (AKA, hardwire 0)
+                                fmt::print("SLTU Instr (UNTESTED)\n");
+                                if (test.r_type.rd != 0)
                                 {
                                     gp_regs[test.r_type.rd] = gp_regs[test.r_type.rs1] < gp_regs[test.r_type.rs2] ? 1 : 0;
                                 }
+                                pc_reg += 4;
                                 break;
                             default:
-                                unimplemented_instr(test);
+                                unimplemented_instr(test, gp_regs, pc_reg);
+                                pc_reg += 4;
                                 break;
                         }
                         break;
                     default:
-                        unimplemented_instr(test);
+                        unimplemented_instr(test, gp_regs, pc_reg);
+                        pc_reg += 4;
                         break;
                 }
                 break;
-            case 0b0010011: // Integer ALU I-Type -- NOTE: Immediates are
-                // sign-extended
-                // (they're signed by DEFAULT, their MSB gets extended to
-                // the left [all ones to the left])
+            case 0b0010011: // Integer ALU I-Type -- NOTE: Immediates are sign-extended (they're signed by DEFAULT, their MSB gets extended to the left [all ones to the left])
                 switch (test.i_type.funct3)
                 {
-                    case 0x0: // ADDI
+                    case 0x0: // ADDI -- TESTED
                         fmt::print("ADDI Instr\n");
                         if (test.i_type.rd != 0)
                         {
-                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] + (test.i_type.imm >> 20);
+                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
+                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] + sign_extend_imm;
                         }
+                        pc_reg += 4;
                         break;
-                    case 0x4: // XORI
+                    case 0x4: // XORI -- TESTED
                         fmt::print("XORI Instr\n");
                         if (test.i_type.rd != 0)
                         {
-                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] ^ (test.i_type.imm >> 20);
+                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
+                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] ^ sign_extend_imm;
                         }
+                        pc_reg += 4;
                         break;
                     case 0x6: // ORI
-                        fmt::print("ORI Instr\n");
+                        fmt::print("ORI Instr (UNTESTED)\n");
                         if (test.i_type.rd != 0)
                         {
-                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] | (test.i_type.imm >> 20);
+                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
+                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] | sign_extend_imm;
                         }
+                        pc_reg += 4;
                         break;
                     case 0x7: // ANDI
-                        fmt::print("ANDI Instr\n");
+                        fmt::print("ANDI Instr (UNTESTED)\n");
                         if (test.i_type.rd != 0)
                         {
-                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] & (test.i_type.imm >> 20);
+                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
+                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] & sign_extend_imm;
                         }
+                        pc_reg += 4;
                         break;
-                    case 0x1: // SLLI -- NOTE: TEST
-                        fmt::print("SLLI Instr\n");
+                    case 0x1: // SLLI
+                        fmt::print("SLLI Instr (UNTESTED)\n");
                         if (test.i_type.rd != 0)
                         {
-                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] << ((test.i_type.imm >> 20) & 0b11111);
+                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
+                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] << (sign_extend_imm & 0x0000001F); // first 5 bits
                         }
+                        pc_reg += 4;
                         break;
-                    case 0x5: // SRLI / SRAI -- NOTE: TEST
+                    case 0x5: // SRLI / SRAI
                         switch ((test.i_type.imm & 0b111111100000) >> 5) // Subdivide the IMM value again with a union?
                         {
                             case 0x00:
-                                fmt::print("SRLI instr\n");
-                                if (test.i_type.rd != 0) // Prevent write to x0 (AKA, hardwire 0)
+                                fmt::print("SRLI Instr (UNTESTED)\n");
+                                if (test.i_type.rd != 0)
                                 {
-                                    gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] >> (test.i_type.imm & 0b0000000111111);
+                                    int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
+                                    gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] >> (sign_extend_imm & 0b000000011111); // Imm [4:0]
                                 }
+                                pc_reg += 4;
                                 break;
                             case 0x20:
-                                fmt::print("SRAI instr\n");
-                                if (test.i_type.rd != 0) // Prevent write to x0 (AKA, hardwire 0)
+                                fmt::print("SRAI Instr (UNTESTED)\n");
+                                if (test.i_type.rd != 0)
                                 {
-                                    gp_regs[test.i_type.rd] = (int32_t)gp_regs[test.i_type.rs1] >> (test.i_type.imm & 0b0000000111111);
+                                    int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
+                                    gp_regs[test.i_type.rd] = (int32_t)gp_regs[test.i_type.rs1] >> (sign_extend_imm & 0b000000011111);
                                 }
+                                pc_reg += 4;
                                 break;
                             default:
-                                unimplemented_instr(test);
+                                unimplemented_instr(test, gp_regs, pc_reg);
+                                pc_reg += 4;
                                 break;
                         }
-                    case 0x2: // SLTI (Set Less Than Immediate) -- NOTE: TEST
-                        fmt::print("SLTI Instr\n");
+                    case 0x2: // SLTI (Set Less Than Immediate)
+                        fmt::print("SLTI Instr (UNTESTED)\n");
                         if (test.i_type.rd != 0)
                         {
                             gp_regs[test.i_type.rd] = (signed)gp_regs[test.i_type.rs1] < (signed)(test.i_type.imm >> 20) ? 1 : 0;
                         }
+                        pc_reg += 4;
                         break;
-                    case 0x3: // SLTIU (Set Less Than Immediate Unsigned) -- NOTE: TEST
-                        fmt::print("SLTIU Instr\n");
+                    case 0x3: // SLTIU (Set Less Than Immediate Unsigned)
+                        fmt::print("SLTIU Instr (UNTESTED)\n");
                         if (test.i_type.rd != 0)
                         {
                             gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] < (test.i_type.imm >> 20) ? 1 : 0;
                         }
+                        pc_reg += 4;
                         break;
                     default:
-                        unimplemented_instr(test);
+                        unimplemented_instr(test, gp_regs, pc_reg);
+                        pc_reg += 4;
                         break;
                 }
                 break;
-            case 0b0000011: // Integer Load I-Type
+            case 0b0000011: // Integer Load I-Type -- ~~TESTED~~ / Needs retesting, switched to a UNION
+                switch (test.i_type.funct3)
+                {
+                    case 0x0: // LB (Load Byte, sign extended)
+                        fmt::print("LB Instr\n");
+                        if (test.i_type.rd != 0)
+                        {
+                            // Need the lowest 8-bits, sign extended, immediate value
+                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
+                            component t;
+                            t.byte[3] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm];
+                            gp_regs[test.i_type.rd] = t.word_s >> 24;
+                        }
+                        pc_reg += 4;
+                        break;
+                    case 0x1: // LH (Load Half, sign-extended)
+                        fmt::print("LH Instr\n");
+                        if (test.i_type.rd != 0)
+                        {
+                            // Need the lowest 16-bits, sign extended, immediate value
+                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
+                            component t;
+                            t.byte[2] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm + 0];
+                            t.byte[3] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm + 1];
+                            gp_regs[test.i_type.rd] = t.word_s >> 16;
+                        }
+                        pc_reg += 4;
+                        break;
+                    case 0x2: // LW (Load Word)
+                        fmt::print("LW Instr\n");
+                        if (test.i_type.rd != 0)
+                        {
+                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
+                            component t;
+                            t.byte[0] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm + 0];
+                            t.byte[1] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm + 1];
+                            t.byte[2] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm + 2];
+                            t.byte[3] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm + 3];
+                            gp_regs[test.i_type.rd] = t.word;
+                        }
+                        pc_reg += 4;
+                        break;
+                    case 0x4: // LBU (Load Byte Unsigned)
+                        fmt::print("LBU Instr\n");
+                        if (test.i_type.rd != 0)
+                        {
+                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
+                            gp_regs[test.i_type.rd] = (uint32_t)memory[gp_regs[test.i_type.rs1] + sign_extend_imm];
+                        }
+                        pc_reg += 4;
+                        break;
+                    case 0x5: // LHU (Load Half Unsigned)
+                        fmt::print("LHU Instr\n");
+                        if (test.i_type.rd != 0)
+                        {
+                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
+                            component t;
+                            t.byte[0] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm + 0];
+                            t.byte[1] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm + 1];
+                            gp_regs[test.i_type.rd] = t.word;
+                        }
+                        pc_reg += 4;
+                        break;
+                    default:
+                        unimplemented_instr(test, gp_regs, pc_reg);
+                        pc_reg += 4;
+                        break;
+                }
                 break;
             case 0b0100011: // Integer Store S-Type
+                switch (test.s_type.funct3)
+                {
+                    case 0x0: // SB
+                        fmt::print("SB Instr (UNTESTED)\n");
+                        {
+                            int32_t sign_extend_imm = (int32_t)((test.s_type.imm11_5 << 5 | test.s_type.imm4_0) << 20) >> 20;
+                            component t; t.word = gp_regs[test.s_type.rs2];
+                            memory[gp_regs[test.s_type.rs1] + sign_extend_imm] = t.byte[0];
+                        }
+                        pc_reg += 4;
+                        break;
+                    case 0x1: // SH
+                        fmt::print("SH Instr (UNTESTED)\n");
+                        {
+                            int32_t sign_extend_imm = (int32_t)((test.s_type.imm11_5 << 5 | test.s_type.imm4_0) << 20) >> 20;
+                            component t; t.word = gp_regs[test.s_type.rs2];
+                            memory[gp_regs[test.s_type.rs1] + sign_extend_imm + 0] = t.byte[0];
+                            memory[gp_regs[test.s_type.rs1] + sign_extend_imm + 1] = t.byte[1];
+                        }
+                        pc_reg += 4;
+                        break;
+                    case 0x2: //SW
+                        fmt::print("SW Instr (UNTESTED)\n");
+                        {
+                            int32_t sign_extend_imm = (int32_t)((test.s_type.imm11_5 << 5 | test.s_type.imm4_0) << 20) >> 20;
+                            component t; t.word = gp_regs[test.s_type.rs2];
+                            memory[gp_regs[test.s_type.rs1] + sign_extend_imm + 0] = t.byte[0];
+                            memory[gp_regs[test.s_type.rs1] + sign_extend_imm + 1] = t.byte[1];
+                            memory[gp_regs[test.s_type.rs1] + sign_extend_imm + 2] = t.byte[2];
+                            memory[gp_regs[test.s_type.rs1] + sign_extend_imm + 3] = t.byte[3];
+                        }
+                        pc_reg += 4;
+                        break;
+                    default:
+                        unimplemented_instr(test, gp_regs, pc_reg);
+                        pc_reg += 4;
+                        break;
+                }
                 break;
             case 0b1100011: // Integer Branch B-Type
                 break;
@@ -329,13 +549,52 @@ int main()
             case 0b1100111: // Integer JALR I-Type
                 break;
             case 0b0110111: // Integer LUI U-Type
+                fmt::print("LUI Instr (UNTESTED)\n");
+                if (test.u_type.rd != 0)
+                {
+                    gp_regs[test.u_type.rd] = (uint32_t)test.u_type.imm31_12 << 12;
+                }
+                pc_reg += 4;
                 break;
             case 0b0010111: // Integer AUIPC U-Type
                 break;
             case 0b1110011: // Integer ECALL/EBREAK I-Type
+                switch (test.i_type.funct3)
+                {
+                    case 0x0: // Funct3 is always 0x0 in the base instruction set
+                        switch (test.i_type.imm)
+                        {
+                            case 0x0:
+                                fmt::print("ECALL Instr, skipping\n");
+                                pc_reg += 4;
+                                break;
+                            case 0x1:
+                                fmt::print("EBREAK Instr\n");
+                                spit_registers(gp_regs, pc_reg);
+                                for (std::size_t i = 0; i < 8; i++)
+                                    fmt::print("{}: {:08x}\n", i, (uint32_t)(memory[i*4 + 3] << 24 | memory[i*4 + 2] << 16 | memory[i*4 + 1] << 8 | memory[i*4]));
+                                pc_reg += 4;
+                                return 0;
+                                break;
+                            case 0x2: /// NONSTANDARD INSTRUCTION FOR DEBUGGING PURPOSES ONLY
+                                fmt::print("ECONT Instr\n");
+                                spit_registers(gp_regs, pc_reg);
+                                pc_reg += 4;
+                                break;
+                            default:
+                                unimplemented_instr(test, gp_regs, pc_reg);
+                                break;
+                        }
+                        break;
+                    default:
+                        unimplemented_instr(test, gp_regs, pc_reg);
+                        pc_reg += 4;
+                        break;
+                }
                 break;
             default:
-                unimplemented_instr(test);
+                unimplemented_instr(test, gp_regs, pc_reg);
+                pc_reg += 4;
                 break;
         }
     }
