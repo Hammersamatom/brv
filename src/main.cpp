@@ -2,116 +2,11 @@
 #include <array>
 #include <vector>
 #include <iostream>
+#include <fstream>
 
 #include <fmt/core.h>
 
-enum instr_types {
-    R_TYPE,
-    I_TYPE,
-    S_TYPE,
-    B_TYPE,
-    U_TYPE,
-    J_TYPE,
-    RAW
-};
-
-union component
-{
-    int32_t word_s;
-    uint32_t word;
-    uint16_t half[2];
-    int16_t half_s[2];
-    uint8_t byte[4];
-    int8_t byte_s[4];
-};
-
-union imm_reconstruct
-{
-    uint32_t word;
-    int32_t word_s;
-    struct __attribute__((__packed__)) b_imm
-    {
-        uint8_t unused_1 : 1;
-        uint8_t imm4_1 : 4;
-        uint8_t imm10_5 : 6;
-        uint8_t imm11 : 1;
-        uint8_t imm12 : 1;
-        uint32_t unused_2 : 19;
-    } b_imm;
-    struct __attribute__((__packed__)) j_imm
-    {
-        uint8_t unused_1 : 1;
-        uint16_t imm10_1 : 10;
-        uint8_t imm11 : 1;
-        uint8_t imm19_12 : 8;
-        uint8_t imm20 : 1;
-        uint16_t unused_2 : 11;
-    } j_imm;
-};
-
-union instr
-{
-    //uint8_t inst_byte[4];
-    //uint16_t inst_half[2];
-    uint32_t instruction;
-    struct __attribute__((__packed__)) op_only
-    {
-        uint8_t opcode : 7;
-        uint32_t unused : 25;
-    } op_only;
-    struct __attribute__((__packed__)) r_type
-    {
-        uint8_t opcode : 7;
-        uint8_t rd : 5;
-        uint8_t funct3 : 3;
-        uint8_t rs1 : 5;
-        uint8_t rs2 : 5;
-        uint8_t funct7 : 7;
-    } r_type;
-    struct __attribute__((__packed__)) i_type
-    {
-        uint8_t opcode : 7;
-        uint8_t rd : 5;
-        uint8_t funct3 : 3;
-        uint8_t rs1 : 5;
-        uint16_t imm : 12;
-    } i_type;
-    struct __attribute__((__packed__)) s_type
-    {
-        uint8_t opcode : 7;
-        uint8_t imm4_0 : 5;
-        uint8_t funct3 : 3;
-        uint8_t rs1 : 5;
-        uint8_t rs2 : 5;
-        uint8_t imm11_5 : 7;
-    } s_type;
-    struct __attribute__((__packed__)) b_type
-    {
-        uint8_t opcode : 7;
-        uint8_t imm11 : 1;
-        uint8_t imm4_1 : 4;
-        uint8_t funct3 : 3;
-        uint8_t rs1 : 5;
-        uint8_t rs2 : 5;
-        uint8_t imm10_5 : 6;
-        uint8_t imm12 : 1;
-    } b_type;
-    struct __attribute__((__packed__)) u_type
-    {
-        uint8_t opcode : 7;
-        uint8_t rd : 5;
-        uint32_t imm31_12 : 20;
-    } u_type;
-    struct __attribute__((__packed__)) j_type
-    {
-        uint8_t opcode : 7;
-        uint8_t rd : 5;
-        uint8_t imm19_12 : 8;
-        uint8_t imm11 : 1;
-        uint16_t imm10_1 : 10;
-        uint8_t imm20 : 1;
-    } j_type;
-};
+#include "unions.hpp"
 
 void spit_registers(uint32_t* regs, uint32_t pc)
 {
@@ -127,67 +22,42 @@ void unimplemented_instr(instr unimp, uint32_t* regs, uint32_t pc)
     std::cin.get();
 }
 
-void print_pretty_instr(instr_types type, instr i)
+
+int main(int argc, char* argv[])
 {
-    switch (type)
-    {
-        case RAW:
-            fmt::print("{:08b} {:08b} {:08b} {:08b}\n", i.instruction >> 24 & 0xFF, i.instruction >> 16 & 0xFF, i.instruction >> 8 & 0xFF, i.instruction & 0xFF);
-            break;
-        case R_TYPE:
-            fmt::print("{:07b} {:05b} {:05b} {:03b} {:05b} {:07b}\n", (uint8_t)i.r_type.funct7, (uint8_t)i.r_type.rs2, (uint8_t)i.r_type.rs1, (uint8_t)i.r_type.funct3, (uint8_t)i.r_type.rd, (uint8_t)i.r_type.opcode);
-            break;
-        case I_TYPE:
-            fmt::print("{:012b} {:05b} {:03b} {:05b} {:07b}\n", (uint16_t)i.i_type.imm, (uint8_t)i.i_type.rs1, (uint8_t)i.i_type.funct3, (uint8_t)i.i_type.rd, (uint8_t)i.i_type.opcode);
-            break;
-        case S_TYPE:
-            fmt::print("{:07b} {:05b} {:05b} {:03b} {:05b} {:07b}\n", (uint8_t)i.s_type.imm11_5, (uint8_t)i.s_type.rs2, (uint8_t)i.s_type.rs1, (uint8_t)i.s_type.funct3, (uint8_t)i.s_type.imm4_0, (uint8_t)i.s_type.opcode);
-            break;
-        case B_TYPE:
-            fmt::print("{:01b} {:06b} {:05b} {:05b} {:03b} {:04b} {:01b} {:07b}\n", (uint8_t)i.b_type.imm12, (uint8_t)i.b_type.imm10_5, (uint8_t)i.b_type.rs2, (uint8_t)i.b_type.rs1, (uint8_t)i.b_type.funct3, (uint8_t)i.b_type.imm4_1, (uint8_t)i.b_type.imm11, (uint8_t)i.b_type.opcode);
-            break;
-        case U_TYPE:
-            fmt::print("{:020b} {:05b} {:07b}\n", (uint8_t)i.u_type.imm31_12, (uint8_t)i.u_type.rd, (uint8_t)i.u_type.opcode);
-            break;
-        case J_TYPE:
-            fmt::print("{:01b} {:010b} {:01b} {:08b} {:05b} {:07b}\n", (uint8_t)i.j_type.imm20, (uint8_t)i.j_type.imm10_1, (uint8_t)i.j_type.imm11, (uint8_t)i.j_type.imm19_12, (uint8_t)i.j_type.rd, (uint8_t)i.j_type.opcode);
-            break;
-    }
-}
-
-
-
-
-
-
-
-#define EBREAK 0x00100073
-#define ECONT 0x00200073
-
-
-
-
-
-int main()
-{
-    std::vector<uint32_t> translated_prog = {
-        0xddccc0b7,
-        0xbaa08093,
-        0x00102823,
-        0x00100073,
-        0x00000000
-    };
+    fmt::print("Got {} arguments\n", argc);
+    for (std::size_t i = 0; i < argc; i++)
+        fmt::print("Argument {}: {}\n", i, argv[i]);
 
     // UINT16_MAX 32-bit words
-    std::array<uint8_t, UINT16_MAX * 4> memory = {};
+    std::array<uint8_t, UINT16_MAX * 4> memory;
+    memory.fill(0);
+    component _ebreak; _ebreak.word = 0x00100073;
+    for(std::size_t m = 0; m < 4; m++) memory[m] = _ebreak.byte[m];
 
-    for (std::size_t i = 0; i < translated_prog.size(); i++)
+    std::ifstream binary;
+    if (argc > 1)
     {
-        component t; t.word = translated_prog[i];
-        memory[i * 4 + 0] = t.byte[0];
-        memory[i * 4 + 1] = t.byte[1];
-        memory[i * 4 + 2] = t.byte[2];
-        memory[i * 4 + 3] = t.byte[3];
+        binary.open(argv[1], std::ios::in | std::ios::binary | std::ios::ate);
+        std::streampos diff = binary.tellg();
+        binary.close();
+
+        if (diff > UINT16_MAX * 4)
+        {
+            fmt::print("Input file size larger than RISCV memory\n");
+            return 0;
+        }
+
+        binary.open(argv[1], std::ios::in | std::ios::binary);
+        char* filebuff = new char[diff];
+        memset(filebuff, 0, diff*sizeof(*filebuff));
+        binary.read(filebuff, diff);
+        binary.close();
+
+        for (std::size_t f = 0; f < diff; f++)
+            memory[f] = filebuff[f];
+
+        delete[] filebuff;
     }
 
     // BEGIN INTERPRETATION
@@ -742,13 +612,9 @@ int main()
                                 pc_reg += 4;
                                 return 0;
                                 break;
-                            case 0x2: /// NONSTANDARD INSTRUCTION FOR DEBUGGING PURPOSES ONLY
-                                fmt::print("ECONT Instr\n");
-                                spit_registers(gp_regs, pc_reg);
-                                pc_reg += 4;
-                                break;
                             default:
                                 unimplemented_instr(test, gp_regs, pc_reg);
+                                pc_reg += 4;
                                 break;
                         }
                         break;
