@@ -34,7 +34,7 @@ union imm_reconstruct
     } j_imm;
 };
 
-union instr
+union instr_word
 {
     //uint8_t inst_byte[4];
     //uint16_t inst_half[2];
@@ -96,4 +96,75 @@ union instr
         uint16_t imm10_1 : 10;
         uint8_t imm20 : 1;
     } j_type;
+};
+
+union instr_half
+{
+    uint16_t half;
+    struct __attribute__((__packed__)) op_only
+    {
+        uint8_t op : 2;
+        uint16_t unused : 14;
+    } op_only;
+    struct __attribute__((__packed__)) cr_type
+    {
+        uint8_t op : 2;
+        uint8_t rs2 : 5;
+        uint8_t rd_rs1 : 5;
+        uint8_t funct4 : 4;
+    } cr_type;
+    struct __attribute__((__packed__)) ci_type
+    {
+        uint8_t op : 2;
+        uint8_t imm6_2 : 5;
+        uint8_t rd_rs1 : 5;
+        uint8_t imm12 : 1;
+        uint8_t funct3 : 3;
+    } ci_type;
+    struct __attribute__((__packed__)) css_type
+    {
+        uint8_t op : 2;
+        uint8_t rs2 : 5;
+        uint8_t imm : 6;
+        uint8_t funct3 : 3;
+    } css_type;
+    struct __attribute__((__packed__)) ciw_type
+    {
+        uint8_t op : 2;
+        uint8_t rd : 3;
+        uint8_t imm : 8;
+        uint8_t funct3 : 3;
+    } ciw_type;
+    struct __attribute__((__packed__)) cl_type
+    {
+        uint8_t op : 2;
+        uint8_t rd : 3;
+        uint8_t imm6_5 : 2;
+        uint8_t rs1 : 3;
+        uint8_t imm12_10 : 3;
+        uint8_t funct3 : 3;
+    } cl_type;
+    struct __attribute__((__packed__)) cs_type
+    {
+        uint8_t op : 2;
+        uint8_t rs2 : 3;
+        uint8_t imm6_5 : 2;
+        uint8_t rd_rs1 : 3;
+        uint8_t imm12_10 : 3;
+        uint8_t funct3 : 3;
+    } cs_type;
+    struct __attribute__((__packed__)) cb_type
+    {
+        uint8_t op : 2;
+        uint8_t imm6_2 : 5;
+        uint8_t rs1 : 3;
+        uint8_t imm12_10 : 3;
+        uint8_t funct3 : 3;
+    } cb_type;
+    struct __attribute__((__packed__)) cj_type
+    {
+        uint8_t op : 2;
+        uint8_t offset : 11;
+        uint8_t funct3 : 3;
+    } cj_type;
 };
