@@ -15,7 +15,7 @@ void spit_registers(uint32_t* regs, uint32_t pc)
     fmt::print("> PCR: {}\n", pc);
 }
 
-void unimplemented_instr(instr_word unimp, uint32_t* regs, uint32_t pc)
+void unimplemented_instr(instr unimp, uint32_t* regs, uint32_t pc)
 {
     fmt::print("! UNIMPLEMENTED INSTRUCTION !\nHEX: {:08x}\n> Opcode: {:07b}\n", unimp.instruction, (uint8_t)unimp.op_only.opcode);
     spit_registers(regs, pc);
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
     }
 
     // BEGIN INTERPRETATION
-    instr_word test;
+    instr test;
     uint32_t gp_regs[32];
     uint32_t pc_reg = 0;
 
