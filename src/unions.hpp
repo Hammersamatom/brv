@@ -14,6 +14,12 @@ union imm_reconstruct
 {
     uint32_t word;
     int32_t word_s;
+    struct __attribute__((__packed__)) s_imm
+    {
+        uint8_t imm4_0 : 5;
+        uint8_t imm11_5 : 7;
+        uint32_t unused : 20;
+    } s_imm;
     struct __attribute__((__packed__)) b_imm
     {
         uint8_t unused_1 : 1;
@@ -36,8 +42,6 @@ union imm_reconstruct
 
 union instr_word
 {
-    //uint8_t inst_byte[4];
-    //uint16_t inst_half[2];
     uint32_t instruction;
     struct __attribute__((__packed__)) op_only
     {
@@ -96,16 +100,19 @@ union instr_word
         uint16_t imm10_1 : 10;
         uint8_t imm20 : 1;
     } j_type;
-};
-
-union instr_half
-{
-    uint16_t half;
-    struct __attribute__((__packed__)) op_only
+    // Atomics (A-Extension) support
+    struct __attribute__((__packed__)) a_type
     {
-        uint8_t op : 2;
-        uint16_t unused : 14;
-    } op_only;
+        uint8_t opcode : 7;
+        uint8_t rd : 5;
+        uint8_t funct3 : 3;
+        uint8_t rs1 : 5;
+        uint8_t rs2 : 5;
+        uint8_t rl : 1;
+        uint8_t aq : 1;
+        uint8_t funct5 : 5;
+    } a_type;
+    // Compressed (C-extension) support
     struct __attribute__((__packed__)) cr_type
     {
         uint8_t op : 2;
@@ -164,7 +171,7 @@ union instr_half
     struct __attribute__((__packed__)) cj_type
     {
         uint8_t op : 2;
-        uint8_t offset : 11;
+        uint16_t offset : 11;
         uint8_t funct3 : 3;
     } cj_type;
 };
