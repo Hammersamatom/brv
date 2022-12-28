@@ -204,7 +204,7 @@ int main(int argc, char* argv[])
                                 fmt::print("SLT Instr (UNTESTED)\n");
                                 if (test.r_type.rd != 0)
                                 {
-                                    gp_regs[test.r_type.rd] = (signed)gp_regs[test.r_type.rs1] < (signed)gp_regs[test.r_type.rs2] ? 1 : 0;
+                                    gp_regs[test.r_type.rd] = (int32_t)gp_regs[test.r_type.rs1] < (int32_t)gp_regs[test.r_type.rs2] ? 1 : 0;
                                 }
                                 pc_reg += 4;
                                 break;
@@ -244,8 +244,10 @@ int main(int argc, char* argv[])
                         fmt::print("ADDI Instr\n");
                         if (test.i_type.rd != 0)
                         {
-                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
-                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] + sign_extend_imm;
+                            imm_reconstruct imm;
+                            imm.word = test.i_type.imm << 20;
+                            imm.word_s = imm.word_s >> 20;
+                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] + imm.word_s;
                         }
                         pc_reg += 4;
                         break;
@@ -253,8 +255,10 @@ int main(int argc, char* argv[])
                         fmt::print("XORI Instr\n");
                         if (test.i_type.rd != 0)
                         {
-                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
-                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] ^ sign_extend_imm;
+                            imm_reconstruct imm;
+                            imm.word = test.i_type.imm << 20;
+                            imm.word_s = imm.word_s >> 20;
+                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] ^ imm.word_s;
                         }
                         pc_reg += 4;
                         break;
@@ -262,8 +266,10 @@ int main(int argc, char* argv[])
                         fmt::print("ORI Instr (UNTESTED)\n");
                         if (test.i_type.rd != 0)
                         {
-                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
-                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] | sign_extend_imm;
+                            imm_reconstruct imm;
+                            imm.word = test.i_type.imm << 20;
+                            imm.word_s = imm.word_s >> 20;
+                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] | imm.word_s;
                         }
                         pc_reg += 4;
                         break;
@@ -271,8 +277,10 @@ int main(int argc, char* argv[])
                         fmt::print("ANDI Instr (UNTESTED)\n");
                         if (test.i_type.rd != 0)
                         {
-                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
-                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] & sign_extend_imm;
+                            imm_reconstruct imm;
+                            imm.word = test.i_type.imm << 20;
+                            imm.word_s = imm.word_s >> 20;
+                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] & imm.word_s;
                         }
                         pc_reg += 4;
                         break;
@@ -280,8 +288,10 @@ int main(int argc, char* argv[])
                         fmt::print("SLLI Instr (UNTESTED)\n");
                         if (test.i_type.rd != 0)
                         {
-                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
-                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] << (sign_extend_imm & 0x1F); // first 5 bits
+                            imm_reconstruct imm;
+                            imm.word = test.i_type.imm << 20;
+                            imm.word_s = imm.word_s >> 20;
+                            gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] << (imm.word_s & 0x1F); // first 5 bits
                         }
                         pc_reg += 4;
                         break;
@@ -292,8 +302,10 @@ int main(int argc, char* argv[])
                                 fmt::print("SRLI Instr (UNTESTED)\n");
                                 if (test.i_type.rd != 0)
                                 {
-                                    int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
-                                    gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] >> (sign_extend_imm & 0x1F); // Imm [4:0]
+                                    imm_reconstruct imm;
+                                    imm.word = test.i_type.imm << 20;
+                                    imm.word_s = imm.word_s >> 20;
+                                    gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] >> (imm.word_s & 0x1F); // Imm [4:0]
                                 }
                                 pc_reg += 4;
                                 break;
@@ -301,8 +313,10 @@ int main(int argc, char* argv[])
                                 fmt::print("SRAI Instr (UNTESTED)\n");
                                 if (test.i_type.rd != 0)
                                 {
-                                    int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
-                                    gp_regs[test.i_type.rd] = (int32_t)gp_regs[test.i_type.rs1] >> (sign_extend_imm & 0x1F);
+                                    imm_reconstruct imm;
+                                    imm.word = test.i_type.imm << 20;
+                                    imm.word_s = imm.word_s >> 20;
+                                    gp_regs[test.i_type.rd] = (int32_t)gp_regs[test.i_type.rs1] >> (imm.word_s & 0x1F);
                                 }
                                 pc_reg += 4;
                                 break;
@@ -315,7 +329,7 @@ int main(int argc, char* argv[])
                         fmt::print("SLTI Instr (UNTESTED)\n");
                         if (test.i_type.rd != 0)
                         {
-                            gp_regs[test.i_type.rd] = (signed)gp_regs[test.i_type.rs1] < (signed)(test.i_type.imm >> 20) ? 1 : 0;
+                            gp_regs[test.i_type.rd] = (int32_t)gp_regs[test.i_type.rs1] < (int32_t)(test.i_type.imm >> 20) ? 1 : 0;
                         }
                         pc_reg += 4;
                         break;
@@ -341,9 +355,11 @@ int main(int argc, char* argv[])
                         if (test.i_type.rd != 0)
                         {
                             // Need the lowest 8-bits, sign extended, immediate value
-                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
+                            imm_reconstruct imm;
+                            imm.word = test.i_type.imm << 20;
+                            imm.word_s = imm.word_s >> 20;
                             component t;
-                            t.byte[3] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm];
+                            t.byte[3] = memory[gp_regs[test.i_type.rs1] + imm.word_s];
                             gp_regs[test.i_type.rd] = t.word_s >> 24;
                         }
                         pc_reg += 4;
@@ -353,10 +369,12 @@ int main(int argc, char* argv[])
                         if (test.i_type.rd != 0)
                         {
                             // Need the lowest 16-bits, sign extended, immediate value
-                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
+                            imm_reconstruct imm;
+                            imm.word = test.i_type.imm << 20;
+                            imm.word_s = imm.word_s >> 20;
                             component t;
-                            t.byte[2] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm + 0];
-                            t.byte[3] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm + 1];
+                            t.byte[2] = memory[gp_regs[test.i_type.rs1] + imm.word_s + 0];
+                            t.byte[3] = memory[gp_regs[test.i_type.rs1] + imm.word_s + 1];
                             gp_regs[test.i_type.rd] = t.word_s >> 16;
                         }
                         pc_reg += 4;
@@ -365,12 +383,14 @@ int main(int argc, char* argv[])
                         fmt::print("LW Instr\n");
                         if (test.i_type.rd != 0)
                         {
-                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
+                            imm_reconstruct imm;
+                            imm.word = test.i_type.imm << 20;
+                            imm.word_s = imm.word_s >> 20;
                             component t;
-                            t.byte[0] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm + 0];
-                            t.byte[1] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm + 1];
-                            t.byte[2] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm + 2];
-                            t.byte[3] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm + 3];
+                            t.byte[0] = memory[gp_regs[test.i_type.rs1] + imm.word_s + 0];
+                            t.byte[1] = memory[gp_regs[test.i_type.rs1] + imm.word_s + 1];
+                            t.byte[2] = memory[gp_regs[test.i_type.rs1] + imm.word_s + 2];
+                            t.byte[3] = memory[gp_regs[test.i_type.rs1] + imm.word_s + 3];
                             gp_regs[test.i_type.rd] = t.word;
                         }
                         pc_reg += 4;
@@ -379,8 +399,10 @@ int main(int argc, char* argv[])
                         fmt::print("LBU Instr\n");
                         if (test.i_type.rd != 0)
                         {
-                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
-                            gp_regs[test.i_type.rd] = (uint32_t)memory[gp_regs[test.i_type.rs1] + sign_extend_imm];
+                            imm_reconstruct imm;
+                            imm.word = test.i_type.imm << 20;
+                            imm.word_s = imm.word_s >> 20;
+                            gp_regs[test.i_type.rd] = (uint32_t)memory[gp_regs[test.i_type.rs1] + imm.word_s];
                         }
                         pc_reg += 4;
                         break;
@@ -388,10 +410,12 @@ int main(int argc, char* argv[])
                         fmt::print("LHU Instr\n");
                         if (test.i_type.rd != 0)
                         {
-                            int32_t sign_extend_imm = (int32_t)(test.i_type.imm << 20) >> 20;
+                            imm_reconstruct imm;
+                            imm.word = test.i_type.imm << 20;
+                            imm.word_s = imm.word_s >> 20;
                             component t;
-                            t.byte[0] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm + 0];
-                            t.byte[1] = memory[gp_regs[test.i_type.rs1] + sign_extend_imm + 1];
+                            t.byte[0] = memory[gp_regs[test.i_type.rs1] + imm.word_s + 0];
+                            t.byte[1] = memory[gp_regs[test.i_type.rs1] + imm.word_s + 1];
                             gp_regs[test.i_type.rd] = t.word;
                         }
                         pc_reg += 4;
@@ -408,34 +432,40 @@ int main(int argc, char* argv[])
                     case 0x0: // SB
                         fmt::print("SB Instr (UNTESTED)\n");
                         {
-                            int32_t sign_extend_imm = (int32_t)((test.s_type.imm11_5 << 5 | test.s_type.imm4_0) << 20) >> 20;
-                            component t;
-                            t.word = gp_regs[test.s_type.rs2];
-                            memory[gp_regs[test.s_type.rs1] + sign_extend_imm + 0] = t.byte[0];
+                            imm_reconstruct imm;
+                            imm.s_imm = {test.s_type.imm4_0, test.s_type.imm11_5, 0};
+                            imm.word = imm.word << 20;
+                            imm.word_s = imm.word_s >> 20;
+                            component t; t.word = gp_regs[test.s_type.rs2];
+                            memory[gp_regs[test.s_type.rs1] + imm.word_s + 0] = t.byte[0];
                         }
                         pc_reg += 4;
                         break;
                     case 0x1: // SH
                         fmt::print("SH Instr (UNTESTED)\n");
                         {
-                            int32_t sign_extend_imm = (int32_t)((test.s_type.imm11_5 << 5 | test.s_type.imm4_0) << 20) >> 20;
-                            component t;
-                            t.word = gp_regs[test.s_type.rs2];
-                            memory[gp_regs[test.s_type.rs1] + sign_extend_imm + 0] = t.byte[0];
-                            memory[gp_regs[test.s_type.rs1] + sign_extend_imm + 1] = t.byte[1];
+                            imm_reconstruct imm;
+                            imm.s_imm = {test.s_type.imm4_0, test.s_type.imm11_5, 0};
+                            imm.word = imm.word << 20;
+                            imm.word_s = imm.word_s >> 20;
+                            component t; t.word = gp_regs[test.s_type.rs2];
+                            memory[gp_regs[test.s_type.rs1] + imm.word_s + 0] = t.byte[0];
+                            memory[gp_regs[test.s_type.rs1] + imm.word_s + 1] = t.byte[1];
                         }
                         pc_reg += 4;
                         break;
                     case 0x2: //SW
                         fmt::print("SW Instr (UNTESTED)\n");
                         {
-                            int32_t sign_extend_imm = (int32_t)((test.s_type.imm11_5 << 5 | test.s_type.imm4_0) << 20) >> 20;
-                            component t;
-                            t.word = gp_regs[test.s_type.rs2];
-                            memory[gp_regs[test.s_type.rs1] + sign_extend_imm + 0] = t.byte[0];
-                            memory[gp_regs[test.s_type.rs1] + sign_extend_imm + 1] = t.byte[1];
-                            memory[gp_regs[test.s_type.rs1] + sign_extend_imm + 2] = t.byte[2];
-                            memory[gp_regs[test.s_type.rs1] + sign_extend_imm + 3] = t.byte[3];
+                            imm_reconstruct imm;
+                            imm.s_imm = {test.s_type.imm4_0, test.s_type.imm11_5, 0};
+                            imm.word = imm.word << 20;
+                            imm.word_s = imm.word_s >> 20;
+                            component t; t.word = gp_regs[test.s_type.rs2];
+                            memory[gp_regs[test.s_type.rs1] + imm.word_s + 0] = t.byte[0];
+                            memory[gp_regs[test.s_type.rs1] + imm.word_s + 1] = t.byte[1];
+                            memory[gp_regs[test.s_type.rs1] + imm.word_s + 2] = t.byte[2];
+                            memory[gp_regs[test.s_type.rs1] + imm.word_s + 3] = t.byte[3];
                         }
                         pc_reg += 4;
                         break;
