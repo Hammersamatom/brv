@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
     {
         binary.open(argv[1], std::ios::in | std::ios::binary | std::ios::ate);
         std::streampos diff = binary.tellg();
-        binary.close();
+        binary.seekg(0);
 
         if (diff > UINT16_MAX * 4)
         {
@@ -48,7 +48,6 @@ int main(int argc, char* argv[])
             return 0;
         }
 
-        binary.open(argv[1], std::ios::in | std::ios::binary);
         char* filebuff = new char[diff];
         memset(filebuff, 0, diff*sizeof(*filebuff));
         binary.read(filebuff, diff);
