@@ -40,7 +40,7 @@ union imm_reconstruct
     } j_imm;
 };
 
-union instr_word
+union instr
 {
     uint32_t instruction;
     struct __attribute__((__packed__)) op_only
