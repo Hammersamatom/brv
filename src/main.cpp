@@ -636,10 +636,8 @@ int main(int argc, char* argv[])
                                 break;
                             case 0x1:
                                 fmt::print("EBREAK Instr\n");
-                                spit_registers(gp_regs, pc_reg);
-                                for (std::size_t i = 0; i < 8; i++)
-                                    fmt::print("{}: {:08x}\n", i, (uint32_t)(memory[i*4 + 3] << 24 | memory[i*4 + 2] << 16 | memory[i*4 + 1] << 8 | memory[i*4]));
                                 pc_reg += 4;
+                                spit_registers(gp_regs, pc_reg);
                                 return 0;
                                 break;
                             default:
