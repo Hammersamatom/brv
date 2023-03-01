@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <memory>
 
 #include <fmt/core.h>
 
@@ -48,15 +49,13 @@ int main(int argc, char* argv[])
             return 0;
         }
 
-        char* filebuff = new char[diff];
-        memset(filebuff, 0, diff*sizeof(*filebuff));
-        binary.read(filebuff, diff);
+        std::unique_ptr<char[]> filebuff = std::make_unique<char[]>(diff);;
+        std::memset(filebuff.get(), 0, diff * sizeof(*filebuff.get()));
+        binary.read(filebuff.get(), diff);
         binary.close();
 
         for (std::size_t f = 0; f < diff; f++)
             memory[f] = filebuff[f];
-
-        delete[] filebuff;
     }
 
     // BEGIN INTERPRETATION
