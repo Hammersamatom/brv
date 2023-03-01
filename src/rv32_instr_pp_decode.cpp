@@ -6,7 +6,7 @@
 
 #include "rv32_instr_pp_decode.hpp"
 
-void print_pretty_instr(instr_types type, instr i)
+void print_pretty_instr(INSTR_TYPE type, instr i)
 {
     switch (type)
     {
@@ -35,7 +35,7 @@ void print_pretty_instr(instr_types type, instr i)
 }
 
 // TODO: Finished implementation of decoding. Only ALU R and I type instructions from RV32I are handled atm
-void rv_pp_decode(const uint32_t& word)
+void rv_pp_decode(const uint32_t& word, REG_TYPE reg_type = X_TYPE)
 {
     instr i; i.instruction = word;
     switch (i.op_only.opcode)
@@ -50,7 +50,7 @@ void rv_pp_decode(const uint32_t& word)
             uint8_t rs2 = i.r_type.rs2;
             int32_t imm = word >> 20;
 
-            std::string repl_text = "{} x{}, x{}, {}{}\n";
+            std::string repl_text = "{} {}{}, {}{}, {}{}\n";
             std::string instr;
 
             // r_type is used since it provides easy access to funct7, even if this is the ALU I-Type case
@@ -68,7 +68,15 @@ void rv_pp_decode(const uint32_t& word)
                 default:  instr = "UNK"; break;
             }
 
-            fmt::print(repl_text, instr, rd, rs1, rs2_or_imm ? "x" : "", rs2_or_imm ? rs2 : ((i.r_type.funct3 == 0x5) ? imm & 0x1F : imm));
+            // FIXME: There has to be a better way to do this...
+            fmt::print(repl_text,
+                       instr,
+                       reg_type ? "" : "x",
+                       reg_type ? abi_names[rd] : std::to_string(rd),
+                       reg_type ? "" : "x",
+                       reg_type ? abi_names[rs1] : std::to_string(rs1),
+                       rs2_or_imm ? "x" : "",
+                       rs2_or_imm ? (reg_type ? abi_names[rs2] : std::to_string(rs2)) : ((i.r_type.funct3 == 0x5) ? std::to_string(imm & 0x1F) : std::to_string(imm)));
             break;
         }
         case 0b0000011: // Integer Load I-Type
