@@ -67,6 +67,13 @@ int main(int argc, char* argv[])
     if (argc > 1)
     {
         binary.open(argv[1], std::ios::in | std::ios::binary | std::ios::ate);
+
+        if (!binary.is_open())
+        {
+            fmt::print("File does not exist or could not be opened\n");
+            return 0;
+        }
+
         std::streampos diff = binary.tellg();
         binary.seekg(0);
 
