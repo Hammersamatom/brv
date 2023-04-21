@@ -7,6 +7,11 @@
 
 #include <fmt/core.h>
 
+// Rapidjson stuff for exporting registers
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/prettywriter.h"
+
 #include "unions.hpp"
 
 void spit_registers(uint32_t* regs, uint32_t pc)
@@ -23,6 +28,28 @@ void unimplemented_instr(instr unimp, uint32_t* regs, uint32_t pc)
     std::cin.get();
 }
 
+std::string export_registers_json(const uint32_t* regs, const uint32_t& pc)
+{
+    rapidjson::Document d; d.SetObject();
+    rapidjson::Value key(rapidjson::kObjectType), val(rapidjson::kObjectType);
+
+    for (uint32_t i = 0; i < 32; i++)
+    {
+        key.SetString(std::string("x" + std::to_string(i)).c_str(), d.GetAllocator());
+        val.SetString(std::to_string(regs[i]).c_str(), d.GetAllocator());
+        d.AddMember(key, val, d.GetAllocator());
+    }
+
+    key.SetString("PCR", d.GetAllocator());
+    val.SetString(std::to_string(pc).c_str(), d.GetAllocator());
+    d.AddMember(key, val, d.GetAllocator());
+
+    rapidjson::StringBuffer strbuf;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(strbuf);
+    d.Accept(writer);
+
+    return std::string(strbuf.GetString());
+}
 
 int main(int argc, char* argv[])
 {
@@ -635,7 +662,8 @@ int main(int argc, char* argv[])
                             case 0x1:
                                 fmt::print("EBREAK Instr\n");
                                 pc_reg += 4;
-                                spit_registers(gp_regs, pc_reg);
+                                //spit_registers(gp_regs, pc_reg);
+                                fmt::print("{}\n", export_registers_json(gp_regs, pc_reg));
                                 return 0;
                                 break;
                             default:
