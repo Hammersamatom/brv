@@ -37,10 +37,10 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 )
 
 # Print current include dirs
-get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
-foreach(dir ${dirs})
-  message(STATUS "dir='${dir}'")
-endforeach()
+#get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+#foreach(dir ${dirs})
+#  message(STATUS "dir='${dir}'")
+#endforeach()
 
 # Print linking libraries
 #message("Libraries: ${SDL2_LIBS}")
