@@ -28,7 +28,7 @@ void unimplemented_instr(instr unimp, uint32_t* regs, uint32_t pc)
     std::cin.get();
 }
 
-std::string export_registers_json(const uint32_t* regs, const uint32_t& pc)
+std::string spit_registers_json(const uint32_t* regs, const uint32_t& pc)
 {
     rapidjson::Document d; d.SetObject();
     rapidjson::Value key(rapidjson::kObjectType), val(rapidjson::kObjectType);
@@ -662,8 +662,8 @@ int main(int argc, char* argv[])
                             case 0x1:
                                 fmt::print("EBREAK Instr\n");
                                 pc_reg += 4;
-                                //spit_registers(gp_regs, pc_reg);
-                                fmt::print("{}\n", export_registers_json(gp_regs, pc_reg));
+                                spit_registers(gp_regs, pc_reg);
+                                fmt::print("{}\n", spit_registers_json(gp_regs, pc_reg));
                                 return 0;
                                 break;
                             default:
