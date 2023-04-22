@@ -36,7 +36,8 @@ std::string spit_registers_json(const uint32_t* regs, const uint32_t& pc)
     for (uint32_t i = 0; i < 32; i++)
     {
         key.SetString(std::string("x" + std::to_string(i)).c_str(), d.GetAllocator());
-        val.SetString(std::to_string(regs[i]).c_str(), d.GetAllocator());
+        int32_t t = *(int32_t*)&regs[i]; // Evil recasting / FIXME: Find another way
+        val.SetString(std::to_string(t).c_str(), d.GetAllocator());
         d.AddMember(key, val, d.GetAllocator());
     }
 
