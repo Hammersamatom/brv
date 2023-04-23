@@ -58,9 +58,19 @@ int main(int argc, char* argv[])
     for (std::size_t i = 0; i < argc; i++)
         fmt::print("Argument {}: {}\n", i, argv[i]);
 
-    // UINT16_MAX 32-bit words
-    std::array<uint8_t, UINT16_MAX * 4> memory;
-    memory.fill(0);
+    auto mem_power_calc = [](uint64_t base, uint64_t exponent) constexpr {
+        uint64_t x = 1;
+        for (uint64_t i = 0; i < exponent; i++)
+        {
+            x *= base;
+        }
+        return x;
+    };
+    const uint64_t MEM_MAX = mem_power_calc(2, 23);
+
+    std::unique_ptr<uint8_t[]> memory = std::make_unique<uint8_t[]>(MEM_MAX);
+    std::memset(memory.get(), 0, MEM_MAX * sizeof(*memory.get()));
+
     component _ebreak; _ebreak.word = 0x00100073;
     for(std::size_t m = 0; m < 4; m++) memory[m] = _ebreak.byte[m];
 
@@ -95,7 +105,7 @@ int main(int argc, char* argv[])
 
     // BEGIN INTERPRETATION
     instr test;
-    uint32_t gp_regs[32];
+    uint32_t gp_regs[32] = { 0 };
     uint32_t pc_reg = 0;
 
     for (;;)
