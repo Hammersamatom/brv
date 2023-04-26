@@ -51,26 +51,26 @@ void rv_pp_decode(const uint32_t& word, REG_TYPE reg_type = X_TYPE)
             int32_t imm = word >> 20;
 
             std::string repl_text = "{} {}{}, {}{}, {}{}\n";
-            std::string instr;
+            std::string mnemonic;
 
             // r_type is used since it provides easy access to funct7, even if this is the ALU I-Type case
             // Regardless, funct3 is located in the same place in both r_type and i_type.
             switch (i.r_type.funct3)
             {
-                case 0x0: instr = rs2_or_imm ? ((i.r_type.funct7 == 0x20) ? "SUB" : "ADD") : "ADDI"; break; // ADD/I + SUB
-                case 0x4: instr = rs2_or_imm ? "XOR" : "XORI"; break; // XOR/I
-                case 0x6: instr = rs2_or_imm ? "OR" : "ORI"; break; // OR/I
-                case 0x7: instr = rs2_or_imm ? "AND" : "ANDI"; break; // AND/I
-                case 0x1: instr = rs2_or_imm ? "SLL" : "SLLI"; break; // SLL/I
-                case 0x5: instr = rs2_or_imm ? ((i.r_type.funct7 == 0x20) ? "SRA" : "SRL") : ((i.r_type.funct7 == 0x20) ? "SRAI" : "SRLI"); break; // SRA/I + SRL/I
-                case 0x2: instr = rs2_or_imm ? "SLT" : "SLTI"; break; // SLT/I
-                case 0x3: instr = rs2_or_imm ? "SLTU" : "SLTIU"; break; // SLTU/SLTIU
-                default:  instr = "UNK"; break;
+                case 0x0: mnemonic = rs2_or_imm ? ((i.r_type.funct7 == 0x20) ? "SUB" : "ADD") : "ADDI"; break; // ADD/I + SUB
+                case 0x4: mnemonic = rs2_or_imm ? "XOR" : "XORI"; break; // XOR/I
+                case 0x6: mnemonic = rs2_or_imm ? "OR" : "ORI"; break; // OR/I
+                case 0x7: mnemonic = rs2_or_imm ? "AND" : "ANDI"; break; // AND/I
+                case 0x1: mnemonic = rs2_or_imm ? "SLL" : "SLLI"; break; // SLL/I
+                case 0x5: mnemonic = rs2_or_imm ? ((i.r_type.funct7 == 0x20) ? "SRA" : "SRL") : ((i.r_type.funct7 == 0x20) ? "SRAI" : "SRLI"); break; // SRA/I + SRL/I
+                case 0x2: mnemonic = rs2_or_imm ? "SLT" : "SLTI"; break; // SLT/I
+                case 0x3: mnemonic = rs2_or_imm ? "SLTU" : "SLTIU"; break; // SLTU/SLTIU
+                default:  mnemonic = "UNK"; break;
             }
 
             // FIXME: There has to be a better way to do this...
             fmt::print(repl_text,
-                       instr,
+                       mnemonic,
                        reg_type ? "" : "x",
                        reg_type ? abi_names[rd] : std::to_string(rd),
                        reg_type ? "" : "x",
