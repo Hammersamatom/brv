@@ -48,7 +48,7 @@ void rv_pp_decode(const uint32_t& word, REG_TYPE reg_type = X_TYPE)
             uint8_t rd = i.r_type.rd;
             uint8_t rs1 = i.r_type.rs1;
             uint8_t rs2 = i.r_type.rs2;
-            int32_t imm = word >> 20;
+            int32_t imm = (signed)word >> 20;
 
             std::string repl_text = "{} {}{}, {}{}, {}{}\n";
             std::string mnemonic;
