@@ -80,6 +80,29 @@ void rv_pp_decode(const uint32_t& word, REG_TYPE reg_type = X_TYPE)
             break;
         }
         case 0b0000011: // Integer Load I-Type
+        {
+            uint8_t rd = i.i_type.rd;
+            uint8_t rs1 = i.i_type.rs1;
+            int32_t imm = (signed)word >> 20;
+
+            std::string mnemonic;
+
+            switch (i.i_type.funct3)
+            {
+                case 0x0: mnemonic = "LB"; break;
+                case 0x1: mnemonic = "LH"; break;
+                case 0x2: mnemonic = "LW"; break;
+                case 0x4: mnemonic = "LBU"; break;
+                case 0x5: mnemonic = "LHU"; break;
+                default:  mnemonic = "UNK"; break;
+            }
+
+            std::string arg_1 = reg_type ? abi_names[rd] : "x" + std::to_string(rd);
+            std::string arg_2 = reg_type ? abi_names[rs1] : "x" + std::to_string(rs1);
+
+            fmt::print("{} {}, {}({})\n", mnemonic, arg_1, imm, arg_2);
+            break;
+        }
         case 0b0100011: // Integer Store S-Type
         case 0b1100011: // Integer Branch B-Type
         case 0b1101111: // Integer JAL J-Type
