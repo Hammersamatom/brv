@@ -108,6 +108,15 @@ void rv_pp_decode(const uint32_t& word, REG_TYPE reg_type = X_TYPE)
         case 0b1101111: // Integer JAL J-Type
         case 0b1100111: // Integer JALR I-Type
         case 0b0110111: // Integer LUI U-Type
+        {
+            uint8_t rd = i.u_type.rd;
+            int32_t imm = (signed)word >> 12;
+
+            std::string arg_1 = reg_type ? abi_names[rd] : "x" + std::to_string(rd);
+
+            fmt::print("LUI {}, {}", arg_1, imm);
+            break;
+        }
         case 0b0010111: // Integer AUIPC U-Type
         case 0b1110011: // Integer ECALL/EBREAK I-Type
         default:
