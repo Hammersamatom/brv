@@ -158,6 +158,16 @@ void rv_pp_decode(const uint32_t& word, REG_TYPE reg_type = X_TYPE)
             break;
         }
         case 0b1101111: // Integer JAL J-Type
+        {
+            uint8_t rs1 = i.j_type.rd;
+            imm_reconstruct imm;
+            imm.j_imm = {0, i.j_type.imm10_1, i.j_type.imm11, i.j_type.imm19_12, i.j_type.imm20, 0};
+
+            std::string arg_1 = reg_type ? abi_names[rs1] : "x" + std::to_string(rs1);
+
+            fmt::print("JAL {}, {}\n", arg_1, imm.word);
+            break;
+        }
         case 0b1100111: // Integer JALR I-Type
         case 0b0110111: // Integer LUI U-Type - Fallthrough Case
         case 0b0010111: // Integer AUIPC U-Type
