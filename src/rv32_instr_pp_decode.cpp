@@ -169,6 +169,17 @@ void rv_pp_decode(const uint32_t& word, REG_TYPE reg_type = X_TYPE)
             break;
         }
         case 0b1100111: // Integer JALR I-Type
+        {
+            uint8_t rd = i.i_type.rd;
+            uint8_t rs1 = i.i_type.rs1;
+            int32_t imm = (signed)word >> 20;
+
+            std::string arg_1 = reg_type ? abi_names[rd] : "x" + std::to_string(rd);
+            std::string arg_2 = reg_type ? abi_names[rs1] : "x" + std::to_string(rs1);
+
+            fmt::print("JALR {}, {}({})\n", arg_1, imm, arg_2);
+            break;
+        }
         case 0b0110111: // Integer LUI U-Type - Fallthrough Case
         case 0b0010111: // Integer AUIPC U-Type
         {
