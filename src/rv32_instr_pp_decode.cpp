@@ -129,6 +129,34 @@ void rv_pp_decode(const uint32_t& word, REG_TYPE reg_type = X_TYPE)
             break;
         }
         case 0b1100011: // Integer Branch B-Type
+        {
+            uint8_t rs1 = i.b_type.rs1;
+            uint8_t rs2 = i.b_type.rs2;
+            imm_reconstruct imm;
+            imm.b_imm = {0, i.b_type.imm4_1, i.b_type.imm10_5, i.b_type.imm11, i.b_type.imm12, 0};
+            imm.word = imm.word << 19;
+            imm.word_s = imm.word_s >> 19;
+
+
+            std::string mnemonic;
+
+            switch (i.b_type.funct3)
+            {
+                case 0x0: mnemonic = "BEQ"; break;
+                case 0x1: mnemonic = "BNE"; break;
+                case 0x4: mnemonic = "BLT"; break;
+                case 0x5: mnemonic = "BGE"; break;
+                case 0x6: mnemonic = "BLTU"; break;
+                case 0x7: mnemonic = "BGEU"; break;
+                default:  mnemonic = "UNK"; break;
+            }
+
+            std::string arg_1 = reg_type ? abi_names[rs1] : "x" + std::to_string(rs1);
+            std::string arg_2 = reg_type ? abi_names[rs2] : "x" + std::to_string(rs2);
+
+            fmt::print("{} {}, {}, {}\n", mnemonic, arg_1, arg_2, imm.word_s);
+            break;
+        }
         case 0b1101111: // Integer JAL J-Type
         case 0b1100111: // Integer JALR I-Type
         case 0b0110111: // Integer LUI U-Type - Fallthrough Case
