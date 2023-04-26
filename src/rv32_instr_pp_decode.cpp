@@ -120,6 +120,7 @@ void rv_pp_decode(const uint32_t& word, REG_TYPE reg_type = X_TYPE)
                 case 0x0: mnemonic = "SB"; break;
                 case 0x1: mnemonic = "SH"; break;
                 case 0x2: mnemonic = "SW"; break;
+                default:  mnemonic = "UNK"; break;
             }
 
             std::string arg_1 = reg_type ? abi_names[rs2] : "x" + std::to_string(rs2);
