@@ -121,6 +121,12 @@ void rv_pp_decode(const uint32_t& word, REG_TYPE reg_type = X_TYPE)
             break;
         }
         case 0b1110011: // Integer ECALL/EBREAK I-Type
+        {
+            std::string mnemonic = i.i_type.imm ? "EBREAK" : "ECALL";
+
+            fmt::print("{}\n", mnemonic);
+            break;
+        }
         default:
             break;
     }
