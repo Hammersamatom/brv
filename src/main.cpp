@@ -52,6 +52,11 @@ std::string spit_registers_json(const uint32_t* regs, const uint32_t& pc)
     return std::string(strbuf.GetString());
 }
 
+inline int32_t sign_extend(uint32_t a, uint8_t shift)
+{
+    return (int32_t)(a << shift) >> shift;
+}
+
 int main(int argc, char* argv[])
 {
     fmt::print("Got {} arguments\n", argc);
@@ -183,21 +188,21 @@ int main(int argc, char* argv[])
                 switch (test.i_type.funct3)
                 {
                     // ADDI -- TESTED
-                    case 0x0: gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] + (int32_t)((uint32_t)test.i_type.imm << 20) >> 20; break;
+                    case 0x0: gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20); break;
                     // XORI -- TESTED
-                    case 0x4: gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] ^ (int32_t)((uint32_t)test.i_type.imm << 20) >> 20; break;
+                    case 0x4: gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] ^ sign_extend(test.i_type.imm, 20); break;
                     // ORI
-                    case 0x6: gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] | (int32_t)((uint32_t)test.i_type.imm << 20) >> 20; break;
+                    case 0x6: gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] | sign_extend(test.i_type.imm, 20); break;
                     // ANDI
-                    case 0x7: gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] & (int32_t)((uint32_t)test.i_type.imm << 20) >> 20; break;
+                    case 0x7: gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] & sign_extend(test.i_type.imm, 20); break;
                     // SLLI / first 5 bits
-                    case 0x1: gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] << ((int32_t)((uint32_t)test.i_type.imm << 20) >> 20 & 0x1F); break;
+                    case 0x1: gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] << (sign_extend(test.i_type.imm, 20) & 0x1F); break;
                     // SRLI / SRAI
                     case 0x5:
                         switch ((test.i_type.imm & 0b111111100000) >> 5) // Subdivide the IMM value again with a union?
                         {
-                            case 0x00: gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] >> ((int32_t)((uint32_t)test.i_type.imm << 20) >> 20 & 0x1F); break;
-                            case 0x20: gp_regs[test.i_type.rd] = (int32_t)gp_regs[test.i_type.rs1] >> ((int32_t)((uint32_t)test.i_type.imm << 20) >> 20 & 0x1F); break;
+                            case 0x00: gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] >> (sign_extend(test.i_type.imm, 20) & 0x1F); break;
+                            case 0x20: gp_regs[test.i_type.rd] = (int32_t)gp_regs[test.i_type.rs1] >> (sign_extend(test.i_type.imm, 20) & 0x1F); break;
                         }
                     // SLTI (Set Less Than Immediate)
                     case 0x2: gp_regs[test.i_type.rd] = (int32_t)gp_regs[test.i_type.rs1] < (int32_t)(test.i_type.imm >> 20) ? 1 : 0; break;
@@ -210,28 +215,28 @@ int main(int argc, char* argv[])
                 {
                     case 0x0: // LB (Load Byte, sign extended)
                         // Need the lowest 8-bits, sign extended, immediate value
-                        t.byte[3] = memory[gp_regs[test.i_type.rs1] + (int32_t)((uint32_t)test.i_type.imm << 20) >> 20 + 0];
+                        t.byte[3] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 0];
                         gp_regs[test.i_type.rd] = t.word_s >> 24;
                         break;
                     case 0x1: // LH (Load Half, sign-extended)
                         // Need the lowest 16-bits, sign extended, immediate value
-                        t.byte[2] = memory[gp_regs[test.i_type.rs1] + (int32_t)((uint32_t)test.i_type.imm << 20) >> 20 + 0];
-                        t.byte[3] = memory[gp_regs[test.i_type.rs1] + (int32_t)((uint32_t)test.i_type.imm << 20) >> 20 + 1];
+                        t.byte[2] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 0];
+                        t.byte[3] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 1];
                         gp_regs[test.i_type.rd] = t.word_s >> 16;
                         break;
                     case 0x2: // LW (Load Word)
-                        t.byte[0] = memory[gp_regs[test.i_type.rs1] + (int32_t)((uint32_t)test.i_type.imm << 20) >> 20 + 0];
-                        t.byte[1] = memory[gp_regs[test.i_type.rs1] + (int32_t)((uint32_t)test.i_type.imm << 20) >> 20 + 1];
-                        t.byte[2] = memory[gp_regs[test.i_type.rs1] + (int32_t)((uint32_t)test.i_type.imm << 20) >> 20 + 2];
-                        t.byte[3] = memory[gp_regs[test.i_type.rs1] + (int32_t)((uint32_t)test.i_type.imm << 20) >> 20 + 3];
+                        t.byte[0] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 0];
+                        t.byte[1] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 1];
+                        t.byte[2] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 2];
+                        t.byte[3] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 3];
                         gp_regs[test.i_type.rd] = t.word;
                         break;
                     case 0x4: // LBU (Load Byte Unsigned)
-                        gp_regs[test.i_type.rd] = (uint32_t)memory[gp_regs[test.i_type.rs1] + (int32_t)((uint32_t)test.i_type.imm << 20) >> 20];
+                        gp_regs[test.i_type.rd] = (uint32_t)memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20)];
                         break;
                     case 0x5: // LHU (Load Half Unsigned)
-                        t.byte[0] = memory[gp_regs[test.i_type.rs1] + (int32_t)((uint32_t)test.i_type.imm << 20) >> 20 + 0];
-                        t.byte[1] = memory[gp_regs[test.i_type.rs1] + (int32_t)((uint32_t)test.i_type.imm << 20) >> 20 + 1];
+                        t.byte[0] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 0];
+                        t.byte[1] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 1];
                         gp_regs[test.i_type.rd] = t.word;
                         break;
                 }
@@ -355,7 +360,7 @@ int main(int argc, char* argv[])
                         {
                             gp_regs[test.i_type.rd] = pc_reg + 4;
                             branched = true;
-                            pc_reg = gp_regs[test.i_type.rs1] + (int32_t)((uint32_t)test.i_type.imm << 20) >> 20;
+                            pc_reg = gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20);
                         }
                         break;
                 }
