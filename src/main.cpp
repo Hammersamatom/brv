@@ -352,7 +352,7 @@ int main(int argc, char* argv[])
                 }
                 break;
             // Integer LUI U-Type
-            case 0b0110111: if (test.u_type.rd != 0)gp_regs[test.u_type.rd] = (uint32_t)test.u_type.imm31_12 << 12; break;
+            case 0b0110111: if (test.u_type.rd != 0) gp_regs[test.u_type.rd] = (uint32_t)test.u_type.imm31_12 << 12; break;
             // Integer AUIPC U-Type
             case 0b0010111: if (test.u_type.rd != 0) gp_regs[test.u_type.rd] = pc_reg + ((uint32_t)test.u_type.imm31_12 << 12); break;
             case 0b1110011: // Integer ECALL/EBREAK I-Type
