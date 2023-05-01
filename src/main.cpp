@@ -284,60 +284,48 @@ int main(int argc, char* argv[])
                         if (gp_regs[test.b_type.rs1] == gp_regs[test.b_type.rs2])
                         {
                             imm.b_imm = {0, test.b_type.imm4_1, test.b_type.imm10_5, test.b_type.imm11, test.b_type.imm12, 0};
-                            imm.word = imm.word << 19;
-                            imm.word_s = imm.word_s >> 19;
                             branched = true;
-                            pc_reg += imm.word_s;
+                            pc_reg += sign_extend(imm.word, 19);
                         }
                         break;
                     case 0x1: // BNE -- Signed or unsigned doesn't matter, since either it's equal or not.
                         if (gp_regs[test.b_type.rs1] != gp_regs[test.b_type.rs2])
                         {
                             imm.b_imm = {0, test.b_type.imm4_1, test.b_type.imm10_5, test.b_type.imm11, test.b_type.imm12, 0};
-                            imm.word = imm.word << 19;
-                            imm.word_s = imm.word_s >> 19;
                             branched = true;
-                            pc_reg += imm.word_s;
+                            pc_reg += sign_extend(imm.word, 19);
                         }
                         break;
                     case 0x4: // BLT
                         if ((signed)gp_regs[test.b_type.rs1] < (signed)gp_regs[test.b_type.rs2])
                         {
                             imm.b_imm = {0, test.b_type.imm4_1, test.b_type.imm10_5, test.b_type.imm11, test.b_type.imm12, 0};
-                            imm.word = imm.word << 19;
-                            imm.word_s = imm.word_s >> 19;
                             branched = true;
-                            pc_reg += imm.word_s;
+                            pc_reg += sign_extend(imm.word, 19);
                         }
                         break;
                     case 0x5: // BGE
                         if ((signed)gp_regs[test.b_type.rs1] >= (signed)gp_regs[test.b_type.rs2])
                         {
                             imm.b_imm = {0, test.b_type.imm4_1, test.b_type.imm10_5, test.b_type.imm11, test.b_type.imm12, 0};
-                            imm.word = imm.word << 19;
-                            imm.word_s = imm.word_s >> 19;
                             branched = true;
-                            pc_reg += imm.word_s;
+                            pc_reg += sign_extend(imm.word, 19);
                         }
                         break;
                     case 0x6: // BLTU
                         if (gp_regs[test.b_type.rs1] < gp_regs[test.b_type.rs2])
                         {
                             imm.b_imm = {0, test.b_type.imm4_1, test.b_type.imm10_5, test.b_type.imm11, test.b_type.imm12, 0};
-                            imm.word = imm.word << 19;
-                            imm.word_s = imm.word_s >> 19;
                             branched = true;
-                            pc_reg += imm.word_s;
+                            pc_reg += sign_extend(imm.word, 19);
                         }
                         break;
                     case 0x7: // BGEU
                         if (gp_regs[test.b_type.rs1] >= gp_regs[test.b_type.rs2])
                         {
                             imm.b_imm = {0, test.b_type.imm4_1, test.b_type.imm10_5, test.b_type.imm11, test.b_type.imm12, 0};
-                            imm.word = imm.word << 19;
-                            imm.word_s = imm.word_s >> 19;
                             branched = true;
-                            pc_reg += imm.word_s;
+                            pc_reg += sign_extend(imm.word, 19);
                         }
                         break;
                 }
@@ -345,11 +333,9 @@ int main(int argc, char* argv[])
             case 0b1101111: // Integer JAL J-Type
                 {
                     imm.j_imm = {0, test.j_type.imm10_1, test.j_type.imm11, test.j_type.imm19_12, test.j_type.imm20, 0};
-                    imm.word = imm.word << 11;
-                    imm.word_s = imm.word_s >> 11;
                     gp_regs[test.j_type.rd] = pc_reg + 4;
                     branched = true;
-                    pc_reg += imm.word_s;
+                    pc_reg += sign_extend(imm.word, 11);
                 }
                 break;
             // Integer JALR I-Type
