@@ -278,12 +278,12 @@ int main(int argc, char* argv[])
                 }
                 break;
             case 0b1100011: // Integer Branch B-Type
+                imm.b_imm = {0, test.b_type.imm4_1, test.b_type.imm10_5, test.b_type.imm11, test.b_type.imm12, 0};
                 switch (test.b_type.funct3)
                 {
                     case 0x0: // BEQ -- Signed or unsigned doesn't matter, since either it's equal or not.
                         if (gp_regs[test.b_type.rs1] == gp_regs[test.b_type.rs2])
                         {
-                            imm.b_imm = {0, test.b_type.imm4_1, test.b_type.imm10_5, test.b_type.imm11, test.b_type.imm12, 0};
                             branched = true;
                             pc_reg += sign_extend(imm.word, 19);
                         }
@@ -291,7 +291,6 @@ int main(int argc, char* argv[])
                     case 0x1: // BNE -- Signed or unsigned doesn't matter, since either it's equal or not.
                         if (gp_regs[test.b_type.rs1] != gp_regs[test.b_type.rs2])
                         {
-                            imm.b_imm = {0, test.b_type.imm4_1, test.b_type.imm10_5, test.b_type.imm11, test.b_type.imm12, 0};
                             branched = true;
                             pc_reg += sign_extend(imm.word, 19);
                         }
@@ -299,7 +298,6 @@ int main(int argc, char* argv[])
                     case 0x4: // BLT
                         if ((signed)gp_regs[test.b_type.rs1] < (signed)gp_regs[test.b_type.rs2])
                         {
-                            imm.b_imm = {0, test.b_type.imm4_1, test.b_type.imm10_5, test.b_type.imm11, test.b_type.imm12, 0};
                             branched = true;
                             pc_reg += sign_extend(imm.word, 19);
                         }
@@ -307,7 +305,6 @@ int main(int argc, char* argv[])
                     case 0x5: // BGE
                         if ((signed)gp_regs[test.b_type.rs1] >= (signed)gp_regs[test.b_type.rs2])
                         {
-                            imm.b_imm = {0, test.b_type.imm4_1, test.b_type.imm10_5, test.b_type.imm11, test.b_type.imm12, 0};
                             branched = true;
                             pc_reg += sign_extend(imm.word, 19);
                         }
@@ -315,7 +312,6 @@ int main(int argc, char* argv[])
                     case 0x6: // BLTU
                         if (gp_regs[test.b_type.rs1] < gp_regs[test.b_type.rs2])
                         {
-                            imm.b_imm = {0, test.b_type.imm4_1, test.b_type.imm10_5, test.b_type.imm11, test.b_type.imm12, 0};
                             branched = true;
                             pc_reg += sign_extend(imm.word, 19);
                         }
@@ -323,7 +319,6 @@ int main(int argc, char* argv[])
                     case 0x7: // BGEU
                         if (gp_regs[test.b_type.rs1] >= gp_regs[test.b_type.rs2])
                         {
-                            imm.b_imm = {0, test.b_type.imm4_1, test.b_type.imm10_5, test.b_type.imm11, test.b_type.imm12, 0};
                             branched = true;
                             pc_reg += sign_extend(imm.word, 19);
                         }
