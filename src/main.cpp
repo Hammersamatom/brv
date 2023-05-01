@@ -126,6 +126,7 @@ int main(int argc, char* argv[])
 
         imm_reconstruct imm; imm.word = 0;
         component t; t.word = 0;
+        uint32_t ls_offset = 0;
 
         switch (test.op_only.opcode)
         {
@@ -211,69 +212,56 @@ int main(int argc, char* argv[])
                 }
                 break;
             case 0b0000011: // Integer Load I-Type -- ~~TESTED~~ / Needs retesting, switched to a UNION
+                ls_offset = gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20);
                 switch (test.i_type.funct3)
                 {
                     case 0x0: // LB (Load Byte, sign extended)
                         // Need the lowest 8-bits, sign extended, immediate value
-                        t.byte[3] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 0];
+                        t.byte[3] = memory[ls_offset + 0];
                         gp_regs[test.i_type.rd] = t.word_s >> 24;
                         break;
                     case 0x1: // LH (Load Half, sign-extended)
                         // Need the lowest 16-bits, sign extended, immediate value
-                        t.byte[2] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 0];
-                        t.byte[3] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 1];
+                        t.byte[2] = memory[ls_offset + 0];
+                        t.byte[3] = memory[ls_offset + 1];
                         gp_regs[test.i_type.rd] = t.word_s >> 16;
                         break;
                     case 0x2: // LW (Load Word)
-                        t.byte[0] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 0];
-                        t.byte[1] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 1];
-                        t.byte[2] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 2];
-                        t.byte[3] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 3];
+                        t.byte[0] = memory[ls_offset + 0];
+                        t.byte[1] = memory[ls_offset + 1];
+                        t.byte[2] = memory[ls_offset + 2];
+                        t.byte[3] = memory[ls_offset + 3];
                         gp_regs[test.i_type.rd] = t.word;
                         break;
                     case 0x4: // LBU (Load Byte Unsigned)
-                        gp_regs[test.i_type.rd] = (uint32_t)memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20)];
+                        t.byte[0] = memory[ls_offset + 0];
+                        gp_regs[test.i_type.rd] = t.word;
                         break;
                     case 0x5: // LHU (Load Half Unsigned)
-                        t.byte[0] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 0];
-                        t.byte[1] = memory[gp_regs[test.i_type.rs1] + sign_extend(test.i_type.imm, 20) + 1];
+                        t.byte[0] = memory[ls_offset + 0];
+                        t.byte[1] = memory[ls_offset + 1];
                         gp_regs[test.i_type.rd] = t.word;
                         break;
                 }
                 break;
             case 0b0100011: // Integer Store S-Type
+                imm.s_imm = {test.s_type.imm4_0, test.s_type.imm11_5, 0};
+                t.word = gp_regs[test.s_type.rs2];
+                ls_offset = gp_regs[test.s_type.rs1] + sign_extend(imm.word, 20);
                 switch (test.s_type.funct3)
                 {
                     case 0x0: // SB
-                        {
-                            imm.s_imm = {test.s_type.imm4_0, test.s_type.imm11_5, 0};
-                            imm.word = imm.word << 20;
-                            imm.word_s = imm.word_s >> 20;
-                            t.word = gp_regs[test.s_type.rs2];
-                            memory[gp_regs[test.s_type.rs1] + imm.word_s + 0] = t.byte[0];
-                        }
+                        memory[gp_regs[test.s_type.rs1] + ls_offset + 0] = t.byte[0];
                         break;
                     case 0x1: // SH
-                        {
-                            imm.s_imm = {test.s_type.imm4_0, test.s_type.imm11_5, 0};
-                            imm.word = imm.word << 20;
-                            imm.word_s = imm.word_s >> 20;
-                            t.word = gp_regs[test.s_type.rs2];
-                            memory[gp_regs[test.s_type.rs1] + imm.word_s + 0] = t.byte[0];
-                            memory[gp_regs[test.s_type.rs1] + imm.word_s + 1] = t.byte[1];
-                        }
+                        memory[gp_regs[test.s_type.rs1] + ls_offset + 0] = t.byte[0];
+                        memory[gp_regs[test.s_type.rs1] + ls_offset + 1] = t.byte[1];
                         break;
                     case 0x2: //SW
-                        {
-                            imm.s_imm = {test.s_type.imm4_0, test.s_type.imm11_5, 0};
-                            imm.word = imm.word << 20;
-                            imm.word_s = imm.word_s >> 20;
-                            t.word = gp_regs[test.s_type.rs2];
-                            memory[gp_regs[test.s_type.rs1] + imm.word_s + 0] = t.byte[0];
-                            memory[gp_regs[test.s_type.rs1] + imm.word_s + 1] = t.byte[1];
-                            memory[gp_regs[test.s_type.rs1] + imm.word_s + 2] = t.byte[2];
-                            memory[gp_regs[test.s_type.rs1] + imm.word_s + 3] = t.byte[3];
-                        }
+                        memory[gp_regs[test.s_type.rs1] + ls_offset + 0] = t.byte[0];
+                        memory[gp_regs[test.s_type.rs1] + ls_offset + 1] = t.byte[1];
+                        memory[gp_regs[test.s_type.rs1] + ls_offset + 2] = t.byte[2];
+                        memory[gp_regs[test.s_type.rs1] + ls_offset + 3] = t.byte[3];
                         break;
                 }
                 break;
