@@ -9,7 +9,7 @@ int main ()
     int b_res[32] = {0};
     int and_results[32] = {0};
 
-    for (int i = 1; i < 32; i++)
+    for (int i = 0; i < 32; i++)
     {
         a_res[i] = (rand() % 4096) - 2048;
         b_res[i] = (rand() % 4096) - 2048;
@@ -27,5 +27,5 @@ int main ()
 
     
     for (int j = 0; j < 32; j++)
-        fmt::print("{}\n", and_results[j]);
+        fmt::print("\"x{}\": \"{}\",\n", j, j ? and_results[j] : 0);
 }
