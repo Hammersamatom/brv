@@ -63,15 +63,7 @@ int main(int argc, char* argv[])
     for (std::size_t i = 0; i < argc; i++)
         fmt::print("Argument {}: {}\n", i, argv[i]);
 
-    auto mem_power_calc = [](uint64_t base, uint64_t exponent) constexpr {
-        uint64_t x = 1;
-        for (uint64_t i = 0; i < exponent; i++)
-        {
-            x *= base;
-        }
-        return x;
-    };
-    const uint64_t MEM_MAX = mem_power_calc(2, 23);
+    const uint64_t MEM_MAX = 1 << 23;
 
     std::unique_ptr<uint8_t[]> memory = std::make_unique<uint8_t[]>(MEM_MAX);
     std::memset(memory.get(), 0, MEM_MAX * sizeof(*memory.get()));
@@ -93,7 +85,7 @@ int main(int argc, char* argv[])
         std::streampos diff = binary.tellg();
         binary.seekg(0);
 
-        if (diff > UINT16_MAX * 4)
+        if (diff > MEM_MAX)
         {
             fmt::print("Input file size larger than RISCV memory\n");
             return 0;
