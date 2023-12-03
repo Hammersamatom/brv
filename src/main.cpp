@@ -205,6 +205,7 @@ int main(int argc, char* argv[])
                             case 0x00: gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] >> (sign_extend(test.i_type.imm, 20) & 0x1F); break;
                             case 0x20: gp_regs[test.i_type.rd] = (int32_t)gp_regs[test.i_type.rs1] >> (sign_extend(test.i_type.imm, 20) & 0x1F); break;
                         }
+                        break;
                     // SLTI (Set Less Than Immediate)
                     case 0x2: gp_regs[test.i_type.rd] = (int32_t)gp_regs[test.i_type.rs1] < (int32_t)(test.i_type.imm >> 20) ? 1 : 0; break;
                     // SLTIU (Set Less Than Immediate Unsigned)
