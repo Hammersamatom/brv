@@ -207,9 +207,9 @@ int main(int argc, char* argv[])
                         }
                         break;
                     // SLTI (Set Less Than Immediate)
-                    case 0x2: gp_regs[test.i_type.rd] = (int32_t)gp_regs[test.i_type.rs1] < (int32_t)(test.i_type.imm >> 20) ? 1 : 0; break;
+                    case 0x2: gp_regs[test.i_type.rd] = (int32_t)gp_regs[test.i_type.rs1] < (int32_t)sign_extend(test.i_type.imm, 20) ? 1 : 0; break;
                     // SLTIU (Set Less Than Immediate Unsigned)
-                    case 0x3: gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] < (test.i_type.imm >> 20) ? 1 : 0; break;
+                    case 0x3: gp_regs[test.i_type.rd] = gp_regs[test.i_type.rs1] < sign_extend(test.i_type.imm, 20 ? 1 : 0); break;
                 }
                 break;
             case 0b0000011: // Integer Load I-Type -- ~~TESTED~~ / Needs retesting, switched to a UNION
