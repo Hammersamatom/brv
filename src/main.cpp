@@ -162,6 +162,7 @@ int main(int argc, char* argv[])
                             case 0x00: gp_regs.setReg(test.r_type.rd, gp_regs[test.i_type.rs1] + val); break;
                             case 0x20: gp_regs.setReg(test.r_type.rd, gp_regs[test.i_type.rs1] - gp_regs[test.r_type.rs2]); break;
                         }
+                        break;
                     // XORI -- TESTED
                     case 0x4: gp_regs.setReg(test.r_type.rd, gp_regs[test.i_type.rs1] ^ val); break;
                     // ORI
