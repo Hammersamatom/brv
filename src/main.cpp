@@ -6,11 +6,7 @@
 #include <memory>
 
 #include <fmt/core.h>
-
-// Rapidjson stuff for exporting registers
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/prettywriter.h"
+#include "simdjson.h"
 
 #include "unions.hpp"
 
@@ -27,7 +23,7 @@ void unimplemented_instr(instr unimp, uint32_t* regs, uint32_t pc)
     spit_registers(regs, pc);
     std::cin.get();
 }
-
+/*
 std::string spit_registers_json(const uint32_t* regs, const uint32_t& pc)
 {
     rapidjson::Document d; d.SetObject();
@@ -51,7 +47,7 @@ std::string spit_registers_json(const uint32_t* regs, const uint32_t& pc)
 
     return std::string(strbuf.GetString());
 }
-
+*/
 inline int32_t sign_extend(uint32_t a, uint8_t shift)
 {
     return (int32_t)(a << shift) >> shift;
@@ -340,7 +336,7 @@ int main(int argc, char* argv[])
                             // ECALL
                             case 0x0: break;
                             // EBREAK
-                            case 0x1: spit_registers(gp_regs, pc_reg); fmt::print("{}\n", spit_registers_json(gp_regs, pc_reg)); return 0; break;
+                            case 0x1: spit_registers(gp_regs, pc_reg); /*fmt::print("{}\n", spit_registers_json(gp_regs, pc_reg));*/ return 0; break;
                         }
                         break;
                 }
