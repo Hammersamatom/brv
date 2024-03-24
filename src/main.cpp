@@ -6,16 +6,9 @@
 #include <memory>
 
 #include <fmt/core.h>
-#include "simdjson.h"
 
+#include "debug.hpp"
 #include "unions.hpp"
-
-void spit_registers(uint32_t* regs, uint32_t pc)
-{
-    for (uint32_t c = 0; c < 32; c++)
-        fmt::print("> x{0:02}: {1:032b} {1:08x} {1} {2}\n", c, regs[c], (int32_t)regs[c]);
-    fmt::print("> PCR: {}\n", pc);
-}
 
 void unimplemented_instr(instr unimp, uint32_t* regs, uint32_t pc)
 {
@@ -23,31 +16,7 @@ void unimplemented_instr(instr unimp, uint32_t* regs, uint32_t pc)
     spit_registers(regs, pc);
     std::cin.get();
 }
-/*
-std::string spit_registers_json(const uint32_t* regs, const uint32_t& pc)
-{
-    rapidjson::Document d; d.SetObject();
-    rapidjson::Value key(rapidjson::kObjectType), val(rapidjson::kObjectType);
 
-    for (uint32_t i = 0; i < 32; i++)
-    {
-        key.SetString(std::string("x" + std::to_string(i)).c_str(), d.GetAllocator());
-        int32_t t = *(int32_t*)&regs[i]; // Evil recasting / FIXME: Find another way
-        val.SetString(std::to_string(t).c_str(), d.GetAllocator());
-        d.AddMember(key, val, d.GetAllocator());
-    }
-
-    key.SetString("PCR", d.GetAllocator());
-    val.SetString(std::to_string(pc).c_str(), d.GetAllocator());
-    d.AddMember(key, val, d.GetAllocator());
-
-    rapidjson::StringBuffer strbuf;
-    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(strbuf);
-    d.Accept(writer);
-
-    return std::string(strbuf.GetString());
-}
-*/
 inline int32_t sign_extend(uint32_t a, uint8_t shift)
 {
     return (int32_t)(a << shift) >> shift;
@@ -336,7 +305,7 @@ int main(int argc, char* argv[])
                             // ECALL
                             case 0x0: break;
                             // EBREAK
-                            case 0x1: spit_registers(gp_regs, pc_reg); /*fmt::print("{}\n", spit_registers_json(gp_regs, pc_reg));*/ return 0; break;
+                            case 0x1: spit_registers(gp_regs, pc_reg); fmt::print("{}\n", spit_registers_json(gp_regs, pc_reg)); return 0; break;
                         }
                         break;
                 }
