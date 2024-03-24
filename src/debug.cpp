@@ -1,8 +1,16 @@
 #include <string>
+#include <iostream>
 #include <fmt/core.h>
 #include <nlohmann/json.hpp>
 #include "debug.hpp"
+#include "unions.hpp"
 
+void unimplemented_instr(instr unimp, uint32_t* regs, uint32_t pc)
+{
+    fmt::print("! UNIMPLEMENTED INSTRUCTION !\nHEX: {:08x}\n> Opcode: {:07b}\n", unimp.instruction, (uint8_t)unimp.op_only.opcode);
+    spit_registers(regs, pc);
+    std::cin.get();
+}
 
 void spit_registers(uint32_t* regs, uint32_t pc)
 {
