@@ -1,3 +1,6 @@
+#ifndef UNION_HPP
+#define UNION_HPP
+
 #include <cstdint>
 
 union component
@@ -175,3 +178,5 @@ union instr
         uint8_t funct3 : 3;
     } cj_type;
 };
+
+#endif
