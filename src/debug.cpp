@@ -26,7 +26,7 @@ std::string spit_registers_json(const uint32_t* regs, const uint32_t& pc)
     // For loop, set key to x# and value to register value
     // Push the two into the json
     for (uint32_t i = 0; i < 32; i++)
-        json.emplace("x"+ std::to_string(i), std::to_string(regs[i]));
+        json.emplace("x"+ std::to_string(i), std::to_string((int32_t)regs[i]));
     // Make a key value pair of the PC Register and it's contents
     json.emplace("PCR", std::to_string(pc));
     // Pretty print it
