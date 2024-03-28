@@ -10,11 +10,6 @@
 #include "debug.hpp"
 #include "unions.hpp"
 
-inline int32_t sign_extend(uint32_t a, uint8_t shift)
-{
-    return (int32_t)(a << shift) >> shift;
-}
-
 int main(int argc, char* argv[])
 {
     fmt::print("Got {} arguments\n", argc);
